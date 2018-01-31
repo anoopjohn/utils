@@ -64,7 +64,17 @@ if [ $(id -u) -eq 0 ]; then
     fi
     db "Copying $source to $destination"
     (nice cp $param "$source" "$destination" 2>&1) | log
-  done  /dev/null
+  done < ./`hostname`.conf
+  db "Changing ownership of conf/`hostname` to metheuser"
+  chown -R metheuser: metheuser "conf/`hostname`"
+ # Run git operations if run as normaluser
+else
+  db "Running git operations"
+  # Run git diff to find changes
+  file_diff=`git diff --no-prefix`
+  diff_lines=$(($(echo -n "$file_diff" | wc -l)))
+  # Run git status to check if untracked files are present
+  git status|grep untracked > /dev/null
   if [ $? -eq 0 ]; then
     has_untracked=1
     git_status=`git status`
